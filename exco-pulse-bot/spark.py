@@ -26,7 +26,6 @@ def spark_svg(months):
             amp=18+42*(p/maxp)
             color = NAVY if cur else (BLUE if d>=p else RED)
             segs.append(f'<path d="{_beat(cx,base,amp,color)}" stroke="{color}" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>')
-        # labels
         lc = NAVY if cur else GREY
         fw = "700" if cur else "400"
         labels.append(
@@ -38,13 +37,30 @@ def spark_svg(months):
     return (f'<svg viewBox="0 0 {W} {H}" width="100%" xmlns="http://www.w3.org/2000/svg" '
             f'style="display:block;width:100%;height:auto;">{grid}{"".join(segs)}{"".join(labels)}</svg>')
 
-if __name__=="__main__":
-    ceo=[{"label":"FEB","delivered":0,"planned":0,"current":False},
-         {"label":"MAR","delivered":0,"planned":1,"current":False},
-         {"label":"APR","delivered":0,"planned":0,"current":False},
-         {"label":"MAY","delivered":0,"planned":13,"current":False},
-         {"label":"JUN","delivered":0,"planned":6,"current":True}]
-    svg=spark_svg(ceo)
-    html=f'<body style="margin:0;background:#fff;"><div style="width:300px;border:1px solid #eee;">{svg}</div></body>'
-    open("/root/exco/spark_test.html","w").write(html)
-    print("wrote spark_test.html")
+def company_strip_svg(months):
+    """Wide company-wide heartbeat strip on navy, matching the email header band."""
+    W, H = 700, 98; base = 46; n = len(months)
+    colw = W / n
+    maxp = max([m["planned"] for m in months] + [1])
+    parts = [f'<rect x="0" y="0" width="{W}" height="{H}" fill="#1B2641"/>']
+    labels = []
+    for i, m in enumerate(months):
+        x0 = colw*i; x1 = colw*(i+1); cx = colw*(i+0.5)
+        d, p, cur = m["delivered"], m["planned"], m["current"]
+        color = "#FFFFFF" if cur else "#E03A3A"
+        amp = (6 + 34*(p/maxp)) if p > 0 else 0
+        if amp <= 0:
+            path = f'M {x0:.1f},{base} L {x1:.1f},{base}'
+        else:
+            path = (f'M {x0:.1f},{base} L {cx-14:.1f},{base} '
+                    f'L {cx-9:.1f},{base+amp*0.10:.1f} L {cx-4:.1f},{base-amp*0.22:.1f} '
+                    f'L {cx:.1f},{base-amp:.1f} L {cx+4:.1f},{base+amp*0.30:.1f} '
+                    f'L {cx+9:.1f},{base+amp*0.06:.1f} L {cx+14:.1f},{base} L {x1:.1f},{base}')
+        parts.append(f'<path d="{path}" stroke="{color}" stroke-width="2" fill="none" '
+                     'stroke-linejoin="round" stroke-linecap="round"/>')
+        labels.append(f'<text x="{cx:.1f}" y="{base+30}" text-anchor="middle" '
+                      f'font-family="Segoe UI,Arial,sans-serif" font-size="15" font-weight="700" fill="#FFFFFF">{d} [{p}]</text>')
+        labels.append(f'<text x="{cx:.1f}" y="{base+46}" text-anchor="middle" '
+                      f'font-family="Segoe UI,Arial,sans-serif" font-size="11" letter-spacing="0.5" fill="#AEB6C7">({m["label"]})</text>')
+    return (f'<svg viewBox="0 0 {W} {H}" width="100%" xmlns="http://www.w3.org/2000/svg" '
+            f'style="display:block;width:100%;height:auto;">' + "".join(parts) + "".join(labels) + '</svg>')
