@@ -4,7 +4,7 @@ Usage: python build_html.py <tracker.xlsm> [YYYY-MM-DD]  ->  writes fresh.html
 """
 import re, datetime, sys, os
 from gen_data import build
-from spark import spark_svg
+from spark import spark_svg, company_strip_svg
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REF = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
@@ -98,6 +98,16 @@ def build_html(xlsm_path, report_date):
     for role, alt in PULSE:
         svg = spark_svg(pulses[role])
         h = re.sub(r'<img[^>]*alt="' + re.escape(alt) + r'[^"]*"[^>]*>', lambda m: svg, h, count=1)
+
+    rkeys = list(pulses.keys())
+    comp = [{
+        "label":     pulses[rkeys[0]][idx]["label"],
+        "current":   pulses[rkeys[0]][idx]["current"],
+        "delivered": sum(pulses[r][idx]["delivered"] for r in rkeys),
+        "planned":   sum(pulses[r][idx]["planned"] for r in rkeys),
+    } for idx in range(len(pulses[rkeys[0]]))]
+    strip = company_strip_svg(comp)
+    h = re.sub(r'<img[^>]*alt="Delivery pulse[^"]*"[^>]*>', lambda m: strip, h, count=1)
 
     roles = [role for role, _ in PULSE]
     ip = iter(open_by.get(r, 0) for r in roles)
