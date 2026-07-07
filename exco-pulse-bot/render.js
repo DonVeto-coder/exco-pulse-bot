@@ -20,7 +20,7 @@ function enlargeFonts(html) {
   const opts = {};
   if (process.env.CHROMIUM_PATH) opts.executablePath = process.env.CHROMIUM_PATH;
   const browser = await chromium.launch(opts);
-  const ctx = await browser.newContext({ deviceScaleFactor: 3, viewport: { width: 734, height: 1200 } });
+  const ctx = await browser.newContext({ deviceScaleFactor: 2 , viewport: { width: 734, height: 1200 } });
   const page = await ctx.newPage();
   const html = enlargeFonts(require('fs').readFileSync('fresh.html', 'utf8'));
   await page.setContent(html, { waitUntil: 'networkidle' });
